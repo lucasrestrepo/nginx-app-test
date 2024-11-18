@@ -1,0 +1,15 @@
+namespace: dev
+name: my-app
+containerName: nginx
+replicas: 2
+environment: dev
+
+image:
+  repository: nginx
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 80
+
+containerPort: 80

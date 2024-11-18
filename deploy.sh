@@ -1,76 +1,48 @@
 #!/bin/bash
 
 # Variables
-REPO_URL="https://github.com/lucasrestrepo/nginx-app-test.git"
-BRANCH="main"
+ENV=$1
 NAMESPACE=""
-ENVIRONMENT=""
-CLUSTER_CONTEXT="default" # Adjust for your local k3s cluster context
-HELM_CHART="./helm" # Path to the Helm chart in the repository
-MANIFEST_DIR="./kustomize"
-RENDERED_YAML="${MANIFEST_DIR}/base/rendered.yaml"
-KUBECTL="/usr/local/bin/kubectl"
-HELM="/usr/local/bin/helm"
+KUSTOMIZE_DIR="./kustomize"
+HELM_CHART="./helm"
+RENDERED_YAML="${KUSTOMIZE_DIR}/base/rendered.yaml"
 
-# Functions
-usage() {
-    echo "Usage: $0 [dev|prd]"
-    exit 1
-}
-
-# Step 1: Parse Environment Argument
-if [ $# -ne 1 ]; then
-    usage
-fi
-
-ENVIRONMENT=$1
-
-if [ "$ENVIRONMENT" == "dev" ]; then
+# Validate environment argument
+if [ "$ENV" == "dev" ]; then
     NAMESPACE="dev"
-elif [ "$ENVIRONMENT" == "prd" ]; then
+elif [ "$ENV" == "prd" ]; then
     NAMESPACE="prd"
 else
-    usage
-fi
-
-# Step 2: Clone Repository
-if [ ! -d ./nginx-app-test ]; then
-    echo "Cloning repository..."
-    git clone -b $BRANCH $REPO_URL
-else
-    echo "Repository already cloned. Pulling latest changes..."
-    cd ./nginx-app-test
-    git pull origin $BRANCH
-    cd ..
-fi
-
-# Step 3: Render Helm Manifests
-echo "Rendering Helm chart for $ENVIRONMENT environment..."
-$HELM template my-app ./nginx-app-test/$HELM_CHART --namespace $NAMESPACE > $RENDERED_YAML
-if [ $? -ne 0 ]; then
-    echo "Helm rendering failed. Exiting."
+    echo "Usage: $0 [dev|prd]"
     exit 1
 fi
 
-# Step 4: Apply Kustomize Overlay
-echo "Applying Kustomize overlay for $ENVIRONMENT..."
-kustomize build ${MANIFEST_DIR}/overlays/${ENVIRONMENT} | $KUBECTL apply -f -
+# Create namespace if it doesn't exist
+kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
+
+# Render Helm templates
+echo "Rendering Helm templates for $ENV environment..."
+helm template my-app $HELM_CHART --namespace $NAMESPACE > $RENDERED_YAML
 if [ $? -ne 0 ]; then
-    echo "Kustomize application failed. Exiting."
+    echo "Failed to render Helm templates. Exiting."
     exit 1
 fi
 
-# Step 5: Rollout Status Check
+# Apply Kustomize overlay
+echo "Applying Kustomize overlay for $ENV environment..."
+kustomize build $KUSTOMIZE_DIR/overlays/$ENV | kubectl apply -f - --namespace $NAMESPACE
+if [ $? -ne 0 ]; then
+    echo "Failed to apply Kustomize overlay. Exiting."
+    exit 1
+fi
+
+# Verify deployment
 echo "Checking rollout status for namespace $NAMESPACE..."
-$KUBECTL rollout status deployment/my-app --namespace $NAMESPACE
+kubectl rollout status deployment/my-app --namespace $NAMESPACE
 if [ $? -ne 0 ]; then
     echo "Deployment failed. Exiting."
     exit 1
 fi
 
-# Step 6: Verify Resources
-echo "Verifying resources in namespace $NAMESPACE..."
-$KUBECTL get all --namespace $NAMESPACE
-
-echo "Deployment completed successfully for $ENVIRONMENT environment."
+echo "Deployment to $ENV namespace completed successfully!"
 

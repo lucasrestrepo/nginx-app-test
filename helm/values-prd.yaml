@@ -1,0 +1,16 @@
+namespace: prd
+name: my-app
+containerName: nginx
+replicas: 5
+environment: prd
+
+image:
+  repository: nginx
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 80
+
+containerPort: 80
+

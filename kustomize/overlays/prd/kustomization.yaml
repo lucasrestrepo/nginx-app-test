@@ -1,6 +1,6 @@
 resources:
   - ../../base
-namespace: dev
+namespace: prd
 patches:
   - target:
       kind: Deployment
