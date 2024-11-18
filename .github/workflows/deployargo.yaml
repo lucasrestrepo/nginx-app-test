@@ -37,7 +37,7 @@ jobs:
       - name: Log in to Argo CD CLI
         run: |
           ARGOCD_SERVER=localhost:32443
-          ARGOCD_PASSWORD=$(kubectl -n default get secret argocd-secret -o jsonpath="{.data.password}" | base64 -d)
+          ARGOCD_PASSWORD= "4GouUjDgTj"
           argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
     
 
