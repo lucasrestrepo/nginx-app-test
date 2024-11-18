@@ -36,9 +36,7 @@ jobs:
       # Step 4: Log in to Argo CD CLI
       - name: Log in to Argo CD CLI
         run: |
-          ARGOCD_SERVER=10.42.0.209:8080
-          ARGOCD_PASSWORD= "4GouUjDgTj"
-          argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
+          argocd login 10.42.0.209:8080 --username admin --password 4GouUjDgTj --insecure
     
 
       # Step 5: Trigger ArgoCD Sync (Optional if Auto-Sync is Disabled)
