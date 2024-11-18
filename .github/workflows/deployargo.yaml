@@ -1,0 +1,45 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - prd
+
+jobs:
+  deploy:
+    runs-on: test-argo
+
+    steps:
+      # Step 1: Checkout the Repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 3: Render Helm Templates for the Environment
+      - name: Render Helm Templates
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            helm template my-nginx-app ./helm --namespace dev > kustomize/base/rendered.yaml
+          elif [[ "${{ github.ref_name }}" == "prd" ]]; then
+            helm template my-nginx-app ./helm --namespace prd > kustomize/base/rendered.yaml
+          fi
+
+      # Step 4: Apply Kustomize Overlays
+      - name: Apply Kustomize Overlays
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            kustomize build kustomize/overlays/dev | kubectl apply -f -
+          elif [[ "${{ github.ref_name }}" == "prd" ]]; then
+            kustomize build kustomize/overlays/prd | kubectl apply -f -
+          fi
+
+      # Step 5: Trigger ArgoCD Sync (Optional if Auto-Sync is Disabled)
+      - name: Trigger ArgoCD Sync
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            argocd app sync nginx-app-dev
+            argocd app wait nginx-app-dev --timeout 300
+          elif [[ "${{ github.ref_name }}" == "prd" ]]; then
+            argocd app sync nginx-app-prd
+            argocd app wait nginx-app-prd --timeout 300
+          fi
