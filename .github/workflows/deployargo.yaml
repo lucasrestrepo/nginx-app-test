@@ -52,9 +52,4 @@ jobs:
             argocd app wait nginx-app-prd --timeout 300
           fi
 
-      # Step 6: Cleanup Workspace
-      - name: Cleanup Workspace
-        if: always()
-        run: |
-          echo "Cleaning up runner workspace..."
-          rm -rf ${{ github.workspace }}
+      - uses: TooMuch4U/runner-post-cleanup@v2.1
