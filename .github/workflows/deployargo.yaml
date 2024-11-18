@@ -30,9 +30,9 @@ jobs:
       - name: Apply Kustomize Overlays
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            kustomize build kustomize/overlays/dev | kubectl apply -f -
+            kustomize build $(pwd)/kustomize/overlays/dev | kubectl apply -f -
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
-            kustomize build kustomize/overlays/prd | kubectl apply -f -
+            kustomize build $(pwd)/kustomize/overlays/prd | kubectl apply -f -
           fi
 
       # Step 4: Log in to Argo CD CLI
