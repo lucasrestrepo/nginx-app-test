@@ -1,0 +1,16 @@
+namespace: default
+name: my-app
+containerName: nginx
+replicas: 2
+environment: dev
+
+image:
+  repository: nginx
+  tag: "1.21"
+
+service:
+  type: ClusterIP
+  port: 80
+
+containerPort: 80
+
