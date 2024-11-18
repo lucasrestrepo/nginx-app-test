@@ -51,5 +51,7 @@ jobs:
             argocd app sync nginx-app-prd
             argocd app wait nginx-app-prd --timeout 300
           fi
-
-      - uses: TooMuch4U/runner-post-cleanup@v2.1
+          
+      - name: clean
+        if: always()
+        uses: colpal/actions-clean@v1
