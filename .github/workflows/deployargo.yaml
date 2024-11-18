@@ -1,13 +1,15 @@
 name: CI/CD Pipeline
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - dev
       - prd
-
 jobs:
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: test-argo
 
     steps:
@@ -49,3 +51,17 @@ jobs:
             argocd app sync nginx-app-prd
             argocd app wait nginx-app-prd --timeout 300
           fi
+
+      # Step 6: Cleanup Workspace
+      - name: Cleanup Workspace
+        if: always()
+        run: |
+          echo "Cleaning up runner workspace..."
+          rm -rf ${{ github.workspace }}
+
+      # Step 7: Cleanup Docker Images (Optional)
+      - name: Cleanup Docker
+        if: always()
+        run: |
+          echo "Cleaning up Docker images and volumes..."
+          docker system prune -af --volumes    
