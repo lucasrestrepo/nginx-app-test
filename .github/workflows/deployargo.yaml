@@ -15,6 +15,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      # Step 2: Install Required Tools (Helm, Kustomize, and Argo CD CLI)
+      - name: Install CLI Tools
+        run: |
+         # Install Argo CD CLI
+         curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.8.0/argocd-linux-amd64
+         chmod +x /usr/local/bin/argocd
+
       # Step 3: Render Helm Templates for the Environment
       - name: Render Helm Templates
         run: |
@@ -32,6 +39,14 @@ jobs:
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
             kustomize build kustomize/overlays/prd | kubectl apply -f -
           fi
+
+      # Step 4: Log in to Argo CD CLI
+      - name: Log in to Argo CD CLI
+        run: |
+          ARGOCD_SERVER=localhost:32443
+          ARGOCD_PASSWORD=$(kubectl -n default get secret argocd-secret -o jsonpath="{.data.password}" | base64 -d)
+          argocd login $ARGOCD_SERVER --username admin --password $ARGOCD_PASSWORD --insecure
+    
 
       # Step 5: Trigger ArgoCD Sync (Optional if Auto-Sync is Disabled)
       - name: Trigger ArgoCD Sync
