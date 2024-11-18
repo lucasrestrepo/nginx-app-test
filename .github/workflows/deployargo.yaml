@@ -58,10 +58,3 @@ jobs:
         run: |
           echo "Cleaning up runner workspace..."
           rm -rf ${{ github.workspace }}
-
-      # Step 7: Cleanup Docker Images (Optional)
-      - name: Cleanup Docker
-        if: always()
-        run: |
-          echo "Cleaning up Docker images and volumes..."
-          docker system prune -af --volumes    
