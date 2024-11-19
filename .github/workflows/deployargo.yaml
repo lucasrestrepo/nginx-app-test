@@ -16,8 +16,18 @@ jobs:
       # Step 1: Checkout the Repository
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-            # Step 2: Render Helm Templates for the Environment
+      # Step 2: Print Working Directory and Repository Contents
+      - name: Debug Directory
+        run: |
+          echo "Working directory:"
+          pwd
+          echo "Contents:"
+          find . -type d    
+
+      # Step 2: Render Helm Templates for the Environment
       - name: Render Helm Templates
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
@@ -25,6 +35,16 @@ jobs:
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
             helm template my-nginx-app ./helm --namespace prd -f ./helm/values-prd.yaml > kustomize/base/rendered.yaml
           fi
+          
+      # Step 3: Verify Kustomize Directory
+      - name: Verify Kustomize Directory
+        run: |
+          if [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "Checking directory: ./kustomize/overlays/dev"
+            ls -la ./kustomize/overlays/dev || echo "Directory does not exist!"
+          if [[ "${{ github.ref_name }}" == "prd" ]]; then
+            echo "Checking directory: ./kustomize/overlays/prd"
+            ls -la ./kustomize/overlays/prd || echo "Directory does not exist!"  
 
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
@@ -33,10 +53,10 @@ jobs:
           export KUSTOMIZE_ENABLE_DEBUG=true
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "Building Kustomize for dev environment..."
-            kustomize build $(pwd)/kustomize/overlays/dev | kubectl apply -f -
+            kustomize build ./kustomize/overlays/dev | kubectl apply -f -
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
             echo "Building Kustomize for prd environment..."
-            kustomize build $(pwd)/kustomize/overlays/prd | kubectl apply -f -
+            kustomize build ./kustomize/overlays/prd | kubectl apply -f -
           fi
         env:
           KUSTOMIZE_ENABLE_DEBUG: true
