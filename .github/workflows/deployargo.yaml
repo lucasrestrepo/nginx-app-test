@@ -19,9 +19,9 @@ jobs:
       - name: Render Helm Templates
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            helm template my-nginx-app ./helm --namespace dev > kustomize/base/rendered.yaml
+            helm template my-nginx-app ./helm --namespace dev -f ./helm/values-dev.yaml > kustomize/base/rendered.yaml
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
-            helm template my-nginx-app ./helm --namespace prd > kustomize/base/rendered.yaml
+            helm template my-nginx-app ./helm --namespace prd -f ./helm/values-prd.yaml > kustomize/base/rendered.yaml
           fi
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
