@@ -61,6 +61,6 @@ jobs:
             argocd app wait nginx-app-prd --timeout 300
           fi
           
-      - name: clean
-        if: always()
-        uses: colpal/actions-clean@v1
+    #  - name: clean
+    #    if: always()
+    #    uses: colpal/actions-clean@v1
