@@ -31,6 +31,8 @@ jobs:
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
         run: |
+          set -x
+          export KUSTOMIZE_ENABLE_DEBUG=true
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "Building Kustomize for dev environment..."
             chown $USER:$USER ./kustomize/overlays/dev/patch-values.yaml
@@ -42,7 +44,20 @@ jobs:
             chmod 777 ./kustomize/overlays/prd/patch-values.yaml
             kustomize build ./kustomize/overlays/prd | kubectl apply -f -
           fi
+        env:
+          KUSTOMIZE_ENABLE_DEBUG: true
 
+      # Step 4: Debug Logs for Kustomize
+      - name: Debug Logs for Kustomize
+        if: failure()
+        run: |
+          echo "Kustomize execution failed. Printing debug information..."
+          echo "Listing current directory contents:"
+          ls -la $(pwd)
+          echo "Kustomize overlays/dev directory:"
+          ls -la ./kustomize/overlays/dev || echo "dev overlay missing"
+          echo "Kustomize overlays/prd directory:"
+          ls -la ./kustomize/overlays/prd || echo "prd overlay missing"
 
       # Step 5: Log in to Argo CD CLI
       - name: Log in to Argo CD CLI
