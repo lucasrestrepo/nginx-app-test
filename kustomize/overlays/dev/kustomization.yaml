@@ -5,4 +5,4 @@ patches:
   - target:
       kind: Deployment
       name: my-app
-    path: patch-values.yaml
+      path: patch-values.yaml
