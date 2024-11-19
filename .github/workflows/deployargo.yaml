@@ -29,7 +29,7 @@ jobs:
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
         run: |
-          set -x
+          set -x # Enable shell debugging
           export KUSTOMIZE_ENABLE_DEBUG=true
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "Building Kustomize for dev environment..."
@@ -41,25 +41,31 @@ jobs:
         env:
           KUSTOMIZE_ENABLE_DEBUG: true
 
-      # Step 4: Debug Logs for Kustomize
+      # Step 4: Debugging on Failure
       - name: Debug Logs for Kustomize
         if: failure()
         run: |
           echo "Kustomize execution failed. Printing debug information..."
+
           echo "Listing current directory contents:"
           ls -la $(pwd)
-          echo "Kustomize overlays/dev directory:"
-          ls -la $(pwd)/kustomize/overlays/dev || echo "dev overlay missing"
-          echo "Kustomize overlays/prd directory:"
-          ls -la $(pwd)/kustomize/overlays/prd || echo "prd overlay missing"
 
-      # Step 4: Log in to Argo CD CLI
+          echo "Base directory contents:"
+          ls -la $(pwd)/kustomize/base || echo "Base directory missing"
+
+          echo "Dev overlay directory contents:"
+          ls -la $(pwd)/kustomize/overlays/dev || echo "Dev overlay missing"
+
+          echo "Prod overlay directory contents:"
+          ls -la $(pwd)/kustomize/overlays/prd || echo "Prod overlay missing"
+
+      # Step 5: Log in to Argo CD CLI
       - name: Log in to Argo CD CLI
         run: |
           argocd login 10.42.0.209:8080 --username admin --password 4GouUjDgTj --insecure
     
 
-      # Step 5: Trigger ArgoCD Sync (Optional if Auto-Sync is Disabled)
+      # Step 6: Trigger ArgoCD Sync (Optional if Auto-Sync is Disabled)
       - name: Trigger ArgoCD Sync
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
