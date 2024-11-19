@@ -17,22 +17,22 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Render Helm Templates for the Environment
+            # Step 2: Render Helm Templates for the Environment
       - name: Render Helm Templates
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            helm template my-nginx-app ./helm --namespace dev > kustomize/base/rendered.yaml
+            helm template my-nginx-app ./helm --namespace dev -f ./helm/values-dev.yaml > kustomize/base/rendered.yaml
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
-            helm template my-nginx-app ./helm --namespace prd > kustomize/base/rendered.yaml
+            helm template my-nginx-app ./helm --namespace prd -f ./helm/values-prd.yaml > kustomize/base/rendered.yaml
           fi
 
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
         run: |
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            kustomize build $(pwd)/kustomize/overlays/dev | kubectl apply -f -
+            kustomize build kustomize/overlays/dev | kubectl apply -f -
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
-            kustomize build $(pwd)/kustomize/overlays/prd | kubectl apply -f -
+            kustomize build kustomize/overlays/prd | kubectl apply -f -
           fi
 
       # Step 4: Log in to Argo CD CLI
