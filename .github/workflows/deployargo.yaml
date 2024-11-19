@@ -2,12 +2,15 @@ name: CI/CD Pipeline
 
 on:
   pull_request:
+    types:
+      - closed
     branches:
       - dev
       - prd
 
 jobs:
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: test-argo
 
     steps:
