@@ -17,15 +17,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
-
-      # Step 2: Print Working Directory and Repository Contents
-      - name: Debug Directory
-        run: |
-          echo "Working directory:"
-          pwd
-          echo "Contents:"
-          find . -type d    
+          fetch-depth: 0    
 
       # Step 2: Render Helm Templates for the Environment
       - name: Render Helm Templates
@@ -35,49 +27,22 @@ jobs:
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
             helm template my-nginx-app ./helm --namespace prd -f ./helm/values-prd.yaml > kustomize/base/rendered.yaml
           fi
-          
-      # Step 3: Verify Kustomize Directory
-      - name: Verify Kustomize Directory
-        run: |
-          if [[ "${{ github.ref_name }}" == "dev" ]]; then
-            echo "Checking directory: ./kustomize/overlays/dev"
-            ls -la ./kustomize/overlays/dev || echo "Directory does not exist!"
-          if [[ "${{ github.ref_name }}" == "prd" ]]; then
-            echo "Checking directory: ./kustomize/overlays/prd"
-            ls -la ./kustomize/overlays/prd || echo "Directory does not exist!"  
 
       # Step 3: Apply Kustomize Overlays
       - name: Apply Kustomize Overlays
         run: |
-          set -x # Enable shell debugging
-          export KUSTOMIZE_ENABLE_DEBUG=true
           if [[ "${{ github.ref_name }}" == "dev" ]]; then
             echo "Building Kustomize for dev environment..."
+            chown $USER:$USER ./kustomize/overlays/dev/patch-values.yaml
+            chmod 777 ./kustomize/overlays/dev/patch-values.yaml
             kustomize build ./kustomize/overlays/dev | kubectl apply -f -
           elif [[ "${{ github.ref_name }}" == "prd" ]]; then
             echo "Building Kustomize for prd environment..."
+            chown $USER:$USER ./kustomize/overlays/prd/patch-values.yaml
+            chmod 777 ./kustomize/overlays/prd/patch-values.yaml
             kustomize build ./kustomize/overlays/prd | kubectl apply -f -
           fi
-        env:
-          KUSTOMIZE_ENABLE_DEBUG: true
 
-      # Step 4: Debugging on Failure
-      - name: Debug Logs for Kustomize
-        if: failure()
-        run: |
-          echo "Kustomize execution failed. Printing debug information..."
-
-          echo "Listing current directory contents:"
-          ls -la $(pwd)
-
-          echo "Base directory contents:"
-          ls -la $(pwd)/kustomize/base || echo "Base directory missing"
-
-          echo "Dev overlay directory contents:"
-          ls -la $(pwd)/kustomize/overlays/dev || echo "Dev overlay missing"
-
-          echo "Prod overlay directory contents:"
-          ls -la $(pwd)/kustomize/overlays/prd || echo "Prod overlay missing"
 
       # Step 5: Log in to Argo CD CLI
       - name: Log in to Argo CD CLI
